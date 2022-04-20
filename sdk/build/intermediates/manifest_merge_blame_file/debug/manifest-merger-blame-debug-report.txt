@@ -1,0 +1,14 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="org.opencv"
+4    android:versionCode="3430"
+5    android:versionName="3.4.3" >
+6
+7    <uses-sdk
+7-->E:\Android Projects\Sudoku_Solver\sdk\java\AndroidManifest.xml:7:5-73
+8        android:minSdkVersion="14"
+8-->E:\Android Projects\Sudoku_Solver\sdk\java\AndroidManifest.xml:7:15-40
+9        android:targetSdkVersion="21" />
+9-->E:\Android Projects\Sudoku_Solver\sdk\java\AndroidManifest.xml:7:41-70
+10
+11</manifest>
