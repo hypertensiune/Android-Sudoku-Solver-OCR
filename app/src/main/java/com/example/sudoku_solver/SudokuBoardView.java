@@ -30,48 +30,48 @@ public class SudokuBoardView extends View {
     private int SELECTED_COLUMN = -1;
     private boolean editing = false;
 
-    public SudokuBoardView(Context context, AttributeSet attributeSet){
+    public SudokuBoardView(Context context, AttributeSet attributeSet) {
         super(context, attributeSet);
 
         textPaint.setColor(Color.WHITE);
         TypedArray attrs = context.getTheme().obtainStyledAttributes(attributeSet, R.styleable.SudokuBoardView, 0, 0);
-        try{
+        try {
             thickLineColor = attrs.getInteger(R.styleable.SudokuBoardView_thickLineColor, 0);
             thinLineColor = attrs.getInteger(R.styleable.SudokuBoardView_thinLineColor, 0);
-        }finally {
+        } finally {
             attrs.recycle();
         }
     }
 
     @Override
-    public boolean onTouchEvent(MotionEvent event){
-        if(editing){
+    public boolean onTouchEvent(MotionEvent event) {
+        if (editing) {
             float x = event.getX();
             float y = event.getY();
 
             int action = event.getAction();
 
-            if(action == MotionEvent.ACTION_DOWN){
-                SELECTED_ROW = ((int)Math.floor(y / cellsize));
-                SELECTED_COLUMN = ((int)Math.floor(x / cellsize));
+            if (action == MotionEvent.ACTION_DOWN) {
+                SELECTED_ROW = ((int) Math.floor(y / cellsize));
+                SELECTED_COLUMN = ((int) Math.floor(x / cellsize));
                 invalidate();
                 return true;
-            }else{
+            } else {
                 return false;
             }
-        }else {
+        } else {
             SELECTED_ROW = SELECTED_COLUMN = -1;
             return false;
         }
     }
 
-    private void drawBoard(Canvas canvas){
+    private void drawBoard(Canvas canvas) {
         boardPaint.setStyle(Paint.Style.FILL);
 
         boardPaint.setStrokeWidth(3);
         boardPaint.setColor(thinLineColor);
-        for(int i = 1; i < 9; i++){
-            if(i % 3 != 0){
+        for (int i = 1; i < 9; i++) {
+            if (i % 3 != 0) {
                 canvas.drawLine(cellsize * i, 0, cellsize * i, getWidth(), boardPaint);
                 canvas.drawLine(0, cellsize * i, getHeight(), cellsize * i, boardPaint);
             }
@@ -79,8 +79,8 @@ public class SudokuBoardView extends View {
 
         boardPaint.setStrokeWidth(10);
         boardPaint.setColor(thickLineColor);
-        for(int i = 1; i < 9; i++){
-            if(i % 3 == 0) {
+        for (int i = 1; i < 9; i++) {
+            if (i % 3 == 0) {
                 canvas.drawLine(cellsize * i, 0, cellsize * i, getWidth(), boardPaint);
                 canvas.drawLine(0, cellsize * i, getHeight(), cellsize * i, boardPaint);
             }
@@ -88,7 +88,7 @@ public class SudokuBoardView extends View {
     }
 
     @Override
-    protected void onMeasure(int width, int height){
+    protected void onMeasure(int width, int height) {
         super.onMeasure(width, height);
 
         int dimension = Math.min(this.getMeasuredWidth(), this.getMeasuredHeight());
@@ -98,38 +98,38 @@ public class SudokuBoardView extends View {
     }
 
     @Override
-    protected void onDraw(Canvas canvas){
-        if(SELECTED_COLUMN != -1 && SELECTED_ROW != -1){
-            canvas.drawCircle( SELECTED_COLUMN * cellsize + cellsize / 2, SELECTED_ROW * cellsize + cellsize / 2, 50, boardPaint);
+    protected void onDraw(Canvas canvas) {
+        if (SELECTED_COLUMN != -1 && SELECTED_ROW != -1) {
+            canvas.drawCircle(SELECTED_COLUMN * cellsize + cellsize / 2, SELECTED_ROW * cellsize + cellsize / 2, 50, boardPaint);
         }
         drawNumbers(canvas);
         drawBoard(canvas);
     }
 
-    public void enableEditing(){
+    public void enableEditing() {
         editing = true;
     }
 
-    public void disableEditing(){
+    public void disableEditing() {
         editing = false;
     }
 
-    public int getSelectedRow(){
+    public int getSelectedRow() {
         return SELECTED_ROW;
     }
 
-    public int getSelected_Column(){
+    public int getSelected_Column() {
         return SELECTED_COLUMN;
     }
 
-    private void drawNumbers(Canvas canvas){
-        for(int i = 0; i < 9; i++){
-            for(int j = 0; j < 9; j++){
-                if(solvedBoard[i][j] != 0) {
+    private void drawNumbers(Canvas canvas) {
+        for (int i = 0; i < 9; i++) {
+            for (int j = 0; j < 9; j++) {
+                if (solvedBoard[i][j] != 0) {
                     String text = Integer.toString(solvedBoard[i][j]);
                     boardPaint.setColor(thinLineColor);
 
-                    if(solvedBoard[i][j] == board[i][j] && (j != SELECTED_COLUMN || i != SELECTED_ROW)) {
+                    if (solvedBoard[i][j] == board[i][j] && (j != SELECTED_COLUMN || i != SELECTED_ROW)) {
                         canvas.drawCircle(j * cellsize + cellsize / 2, i * cellsize + cellsize / 2, 50, boardPaint);
                     }
 
@@ -144,7 +144,7 @@ public class SudokuBoardView extends View {
         }
     }
 
-    public void setBoard(int[][] BOARD, int[][] SOLVED){
+    public void setBoard(int[][] BOARD, int[][] SOLVED) {
         SELECTED_ROW = SELECTED_COLUMN = -1;
         board = BOARD;
         solvedBoard = SOLVED;

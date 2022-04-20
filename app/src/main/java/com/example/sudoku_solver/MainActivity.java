@@ -1,10 +1,15 @@
 package com.example.sudoku_solver;
 
+import androidx.annotation.MainThread;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
@@ -55,9 +60,11 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     private Button keyboardButton;
     private boolean ok = true;
     private boolean flash = false;
-    public static int[][] board = new int[9][9];
-    private int N = 0;
-    private int thresholdMode = 1;
+    public static int[][] board;
+    private int minNumbersOnBoard = 7;
+    private int curNumbersOnBoard = 0;
+    private int SOLVE_FROM_IMAGE = 0;
+    private int SOLVE_FROM_MANUAL = 1;
     private final TextRecognizer textRecognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS);
 
     @Override
@@ -73,9 +80,10 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         flashButton = (Button) findViewById(R.id.flashBtn);
         keyboardButton = (Button) findViewById(R.id.kBtn);
 
-        for(int i = 0; i < 9; i++) {
-            for (int j = 0; j < 9; j++)
-                board[i][j] = 0;
+        board = new int[9][9];
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_DENIED) {
+            ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.CAMERA}, 112);
         }
 
         keyboardButton.setOnClickListener(new View.OnClickListener() {
@@ -84,19 +92,19 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                 javaCameraView.disableView();
 
                 Intent i = new Intent(MainActivity.this, SolverActivity.class);
-                i.putExtra("type", 1);
+                i.putExtra("type", SOLVE_FROM_MANUAL);
                 startActivity(i);
             }
         });
 
-        flashButton.setOnClickListener(new View.OnClickListener(){
+        flashButton.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view){
-                if(!flash){
+            public void onClick(View view) {
+                if (!flash) {
                     javaCameraView.turnOnFlashlight();
                     flashButton.setBackgroundResource(R.drawable.flash_on);
                     flash = true;
-                }else{
+                } else {
                     javaCameraView.turnOffFlashLight();
                     flashButton.setBackgroundResource(R.drawable.flash_off);
                     flash = false;
@@ -114,7 +122,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         });
     }
 
-    public Mat processImage(Mat mat, Rect rect){
+    public Mat processImage(Mat mat, Rect rect) {
         Mat binaryImage = new Mat();
         Mat lines = new Mat();
         List<MatOfPoint> contours = new ArrayList<MatOfPoint>();
@@ -129,13 +137,13 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         Mat hkernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(50, 1));
         Imgproc.morphologyEx(binaryImage, lines, Imgproc.MORPH_OPEN, hkernel);
         Imgproc.findContours(lines, contours, new Mat(), Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
-        Imgproc.drawContours(binaryImage, contours,-1, new Scalar(0, 0, 0), 10);
+        Imgproc.drawContours(binaryImage, contours, -1, new Scalar(0, 0, 0), 10);
 
         // remove all vertical lines
         Mat vkernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(1, 40));
         Imgproc.morphologyEx(binaryImage, lines, Imgproc.MORPH_OPEN, vkernel);
         Imgproc.findContours(lines, contours, new Mat(), Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
-        Imgproc.drawContours(binaryImage, contours,-1, new Scalar(0, 0, 0), 10);
+        Imgproc.drawContours(binaryImage, contours, -1, new Scalar(0, 0, 0), 10);
 
         //crop image
         Mat cropped = new Mat(binaryImage, rect);
@@ -144,7 +152,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         return cropped;
     }
 
-    public Rect getSudokuBoundingRectangle(Mat mRGBA){
+    public Rect getSudokuBoundingRectangle(Mat mRGBA) {
 
         // remove noise from image, transform to grayscale
         Mat mRGBAG = new Mat();
@@ -158,7 +166,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         Imgproc.findContours(canny, contours, new Mat(), Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
 
         // if there are contours, get the biggest one
-        if(contours.size() > 0) {
+        if (contours.size() > 0) {
             double maxA = 0;
             int imax = 0;
             for (int i = 0; i < contours.size(); i++) {
@@ -181,13 +189,12 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             Rect rect = Imgproc.boundingRect(points);
 
             return rect;
-        }
-        else {
+        } else {
             return null;
         }
     }
 
-    public void recognizeTextFromImage(Mat mRGBA){
+    public void recognizeTextFromImage(Mat mRGBA) {
         Bitmap bitmapImage = Bitmap.createBitmap(mRGBA.cols(), mRGBA.rows(), Bitmap.Config.ARGB_8888);
         Utils.matToBitmap(mRGBA, bitmapImage);
         InputImage inImg = InputImage.fromBitmap(bitmapImage, 90);
@@ -196,9 +203,9 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                     @Override
                     public void onSuccess(Text text) {
                         Log.e("MLKIT", "Task success");
-                        for(Text.TextBlock block: text.getTextBlocks()){
-                            for(Text.Line line: block.getLines()){
-                                for(Text.Element element: line.getElements()) {
+                        for (Text.TextBlock block : text.getTextBlocks()) {
+                            for (Text.Line line : block.getLines()) {
+                                for (Text.Element element : line.getElements()) {
                                     android.graphics.Rect elRect = element.getBoundingBox();
 
                                     int approxWidth = mRGBA.width() / 9;
@@ -209,19 +216,18 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
                                     char c = transformPossibleNumberFromChar(element.getText().charAt(0));
                                     int nr = c - '0';
-                                    N++;
+                                    curNumbersOnBoard++;
                                     board[i][j] = nr > 0 && nr < 10 ? nr : 0;
                                 }
                             }
                         }
 
-                        if(check()) {
+                        if (check()) {
                             Intent i = new Intent(MainActivity.this, SolverActivity.class);
-                            i.putExtra("type", 0);
+                            i.putExtra("type", SOLVE_FROM_IMAGE);
                             i.putExtra("board", board);
                             startActivity(i);
-                        }
-                        else{
+                        } else {
                             Toast toast = Toast.makeText(getApplicationContext(), "PLEASE RETAKE PHOTO", Toast.LENGTH_SHORT);
                             toast.show();
                             ok = true;
@@ -236,27 +242,29 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                 });
     }
 
-    private boolean check(){
-        if(N < 5 || (rect.width < mRGBA.width() / 3 && rect.height < mRGBA.height() / 3)){
+    private boolean check() {
+        if (curNumbersOnBoard < minNumbersOnBoard || (rect.width < mRGBA.width() / 3 && rect.height < mRGBA.height() / 3)) {
             return false;
         }
         return true;
     }
 
-    private char transformPossibleNumberFromChar(char c){
-        switch (c){
+    private char transformPossibleNumberFromChar(char c) {
+        switch (c) {
             case 'A':
-                c = '4'; break;
+                c = '4';
+                break;
             case '|':
-                c = '1'; break;
+                c = '1';
+                break;
         }
         return c;
     }
 
     private BaseLoaderCallback baseLoaderCallback = new BaseLoaderCallback(this) {
         @Override
-        public void onManagerConnected(int status){
-            switch (status){
+        public void onManagerConnected(int status) {
+            switch (status) {
                 case BaseLoaderCallback.SUCCESS:
                     javaCameraView.enableView();
                     break;
@@ -269,7 +277,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
     @Override
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
-        if(ok){
+        if (ok) {
             mRGBA = inputFrame.rgba();
             mRGBAT = inputFrame.gray();
             rect = getSudokuBoundingRectangle(mRGBA);
@@ -286,10 +294,9 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     @Override
     protected void onResume() {
         super.onResume();
-        if(OpenCVLoader.initDebug()){
+        if (OpenCVLoader.initDebug()) {
             baseLoaderCallback.onManagerConnected(BaseLoaderCallback.SUCCESS);
-        }
-        else{
+        } else {
             OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION, this, baseLoaderCallback);
         }
     }
@@ -297,7 +304,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     @Override
     protected void onPause() {
         super.onPause();
-        if(javaCameraView != null){
+        if (javaCameraView != null) {
             javaCameraView.disableView();
         }
     }
@@ -305,7 +312,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if(javaCameraView != null){
+        if (javaCameraView != null) {
             javaCameraView.disableView();
         }
     }
