@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="SudokuBoardView">
+        <attr name="thickColor" format="color"/>
+        <attr name="thinColor" format="color"/>
+    </declare-styleable>
+</resources>
