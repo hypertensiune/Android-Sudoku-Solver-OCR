@@ -13,12 +13,6 @@ This project is an android app that solves sudoku, hence the name, recognized fr
 
 I've built this project the first time in early 2022 ( [v1](https://github.com/hypertensiune/Android-Sudoku-Solver-OCR/tree/v1) branch ) and this is a refresh, an update to the original project.
 
-What's new:
-- Better image processing and sudoku board recognition
-- Better text recognition
-- Code refactoring in Kotlin
-- Improved documentation
-
 ## How to use
 
 Download or [build](#build) the app yourself.
