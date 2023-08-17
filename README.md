@@ -5,6 +5,7 @@
 - [How to use](#how-to-use)
 - [How it works](#how-it-works)
 - [Build](#build)
+- [Libraries used](#libraries-used)
 
 ## Introduction
 
@@ -130,3 +131,7 @@ private fun solve(index: Int = 0): Boolean {
             mScale = Math.max(((float)height)/mFrameHeight, ((float)width)/mFrameWidth);
             ```
 - Done, you can now build the project
+
+## Libraries used
+- [OpenCV](https://github.com/opencv/opencv) for image processing.
+- [ML Kit Text Recognition V2](https://developers.google.com/ml-kit/vision/text-recognition/v2) for getting the numbers out of the image.
